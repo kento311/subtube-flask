@@ -23,7 +23,7 @@ HTML_TEMPLATE = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>VTuber English</title>
+    <title>Subtube</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", sans-serif; background: #000; color: #fff; margin: 0; overflow: hidden; width: 100vw; height: 100vh; -webkit-tap-highlight-color: transparent; }
         #app-root { width: 100%; height: 100%; display: flex; flex-direction: column; transition: transform 0.3s ease; position: relative; }
