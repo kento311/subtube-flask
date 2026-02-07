@@ -1,0 +1,4 @@
+Flask
+deep-translator
+youtube-transcript-api
+gunicorn
