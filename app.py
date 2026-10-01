@@ -12,6 +12,7 @@ from services.translation import (
 
 
 app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = 16 * 1024
 
 
 @app.route("/")
@@ -50,4 +51,4 @@ def translate_sentence():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="127.0.0.1", port=port)

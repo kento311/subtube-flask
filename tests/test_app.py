@@ -35,6 +35,15 @@ class AppTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 400)
 
+    def test_translation_endpoint_rejects_oversized_requests(self):
+        response = self.client.post(
+            "/api/translate_text",
+            data=b"x" * (16 * 1024 + 1),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 413)
+
     @patch("app.translate_to_japanese", return_value="こんにちは")
     def test_translation_endpoint_returns_translation(self, translate):
         response = self.client.post(
