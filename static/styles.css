@@ -130,6 +130,16 @@ button {
     font-size: 0.9em;
 }
 
+.configuration-notice {
+    margin: 20px auto 0;
+    max-width: 32rem;
+    padding: 10px;
+    border: 1px solid #444;
+    border-radius: 8px;
+    color: #aaa;
+    line-height: 1.5;
+}
+
 .subtitle-message {
     margin: 0;
     padding: 20px;
@@ -237,6 +247,16 @@ button {
     margin-top: 15px;
 }
 
+.definition-status {
+    padding: 10px;
+    color: #aaa;
+}
+
+.definition-status-error,
+.jp-meaning-error {
+    color: #ff6b6b;
+}
+
 .trans-btn {
     background: #ff6b6b;
     color: white;
@@ -272,6 +292,10 @@ button {
     color: #81ecec;
     font-weight: bold;
     font-size: 1.4em;
+}
+
+.jp-meaning-pending {
+    color: #aaa;
 }
 
 #toast {

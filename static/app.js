@@ -3,6 +3,8 @@ let transcript = [];
 let syncTimer;
 
 const MAX_SUBTITLE_FILE_SIZE = 5 * 1024 * 1024;
+const translationEnabled =
+    document.body.dataset.translationEnabled === "true";
 
 const youtubeApiScript = document.createElement("script");
 youtubeApiScript.src = "https://www.youtube.com/iframe_api";
@@ -210,8 +212,15 @@ async function translateLine(text) {
     const definitionContent = document.getElementById("def-content");
     document.getElementById("definition-box").classList.add("open");
     if (player && typeof player.pauseVideo === "function") player.pauseVideo();
-    definitionContent.innerHTML =
-        '<div style="padding:10px;">Translating selection...</div>';
+
+    if (!translationEnabled) {
+        setDefinitionMessage(
+            "翻訳機能は無効です。DEEPL_API_KEYを設定すると利用できます。",
+        );
+        return;
+    }
+
+    setDefinitionMessage("選択範囲を翻訳しています…");
 
     try {
         const response = await fetch("/api/translate_text", {
@@ -220,13 +229,20 @@ async function translateLine(text) {
             body: JSON.stringify({ text }),
         });
         const data = await response.json();
-        if (data.error) {
-            definitionContent.innerText = `Error: ${data.error}`;
-        } else {
-            definitionContent.innerHTML = `<div class="original-text">"${text}"</div><div class="full-trans-result">${data.translation}</div>`;
+        if (!response.ok || data.error) {
+            throw new Error(data.error || "翻訳に失敗しました。");
         }
+
+        const originalText = document.createElement("div");
+        originalText.className = "original-text";
+        originalText.textContent = `"${text}"`;
+
+        const translatedText = document.createElement("div");
+        translatedText.className = "full-trans-result";
+        translatedText.textContent = data.translation;
+        definitionContent.replaceChildren(originalText, translatedText);
     } catch (error) {
-        definitionContent.innerText = `Error: ${error}`;
+        setDefinitionMessage(error.message || "翻訳に失敗しました。", true);
     }
 }
 
@@ -236,43 +252,94 @@ async function lookupEnglish(word) {
     const definitionContent = document.getElementById("def-content");
     document.getElementById("definition-box").classList.add("open");
     if (player && typeof player.pauseVideo === "function") player.pauseVideo();
-    definitionContent.innerHTML = `<div style="padding:10px;">Searching <b>${word}</b>...</div>`;
+    setDefinitionMessage(`${word} を検索しています…`);
 
     try {
         const response = await fetch(
-            `https://api.dictionaryapi.dev/api/v2/entries/en/${word}`,
+            `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`,
         );
         const data = await response.json();
-        let htmlContent = "";
+        if (!response.ok && data.title !== "No Definitions Found") {
+            throw new Error("辞書検索に失敗しました。");
+        }
+
+        const wordElement = document.createElement("div");
+        wordElement.className = "dict-word";
+        wordElement.textContent = word;
+
+        const definitionElement = document.createElement("div");
+        definitionElement.className = "dict-def";
         if (data.title === "No Definitions Found") {
-            htmlContent = `<div class="dict-word">${word}</div><div style="color:#888;">No definition found.</div>`;
+            definitionElement.textContent = "No definition found.";
         } else {
             const definition = data[0].meanings[0].definitions[0].definition;
             const phonetic = data[0].phonetic || "";
-            htmlContent = `<div class="dict-word">${word}<span class="dict-phonetic">${phonetic}</span></div><div class="dict-def">${definition}</div>`;
+            if (phonetic) {
+                const phoneticElement = document.createElement("span");
+                phoneticElement.className = "dict-phonetic";
+                phoneticElement.textContent = ` ${phonetic}`;
+                wordElement.appendChild(phoneticElement);
+            }
+            definitionElement.textContent = definition;
         }
-        htmlContent += `<div><button class="trans-btn" onclick="lookupJapanese('${word}')">🇯🇵 単語を翻訳</button></div><div id="jp-result"></div>`;
-        definitionContent.innerHTML = htmlContent;
-    } catch {
-        definitionContent.innerText = "Error";
+
+        const resultElement = document.createElement("div");
+        resultElement.id = "jp-result";
+        const elements = [wordElement, definitionElement];
+        if (translationEnabled) {
+            const buttonWrapper = document.createElement("div");
+            const translationButton = document.createElement("button");
+            translationButton.className = "trans-btn";
+            translationButton.type = "button";
+            translationButton.textContent = "🇯🇵 単語を翻訳";
+            translationButton.addEventListener("click", () => lookupJapanese(word));
+            buttonWrapper.appendChild(translationButton);
+            elements.push(buttonWrapper, resultElement);
+        }
+        definitionContent.replaceChildren(...elements);
+    } catch (error) {
+        setDefinitionMessage(error.message || "辞書検索に失敗しました。", true);
     }
 }
 
 async function lookupJapanese(word) {
     const japaneseResult = document.getElementById("jp-result");
-    japaneseResult.innerHTML =
-        '<div class="jp-meaning" style="color:#aaa;">翻訳中...</div>';
+    const status = document.createElement("div");
+    status.className = "jp-meaning jp-meaning-pending";
+    status.textContent = "翻訳しています…";
+    japaneseResult.replaceChildren(status);
+
     try {
-        const response = await fetch(`/api/translate/${word}`);
+        const response = await fetch("/api/translate_text", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: word }),
+        });
         const data = await response.json();
-        if (data.error) {
-            japaneseResult.innerText = "Error";
-        } else {
-            japaneseResult.innerHTML = `<div class="jp-meaning">${data.meaning}</div>`;
+        if (!response.ok || data.error) {
+            throw new Error(data.error || "翻訳に失敗しました。");
         }
-    } catch {
-        japaneseResult.innerText = "Error";
+
+        const translatedWord = document.createElement("div");
+        translatedWord.className = "jp-meaning";
+        translatedWord.textContent = data.translation;
+        japaneseResult.replaceChildren(translatedWord);
+    } catch (error) {
+        const errorElement = document.createElement("div");
+        errorElement.className = "jp-meaning jp-meaning-error";
+        errorElement.textContent = error.message || "翻訳に失敗しました。";
+        japaneseResult.replaceChildren(errorElement);
     }
+}
+
+function setDefinitionMessage(message, isError = false) {
+    const definitionContent = document.getElementById("def-content");
+    const messageElement = document.createElement("div");
+    messageElement.className = isError
+        ? "definition-status definition-status-error"
+        : "definition-status";
+    messageElement.textContent = message;
+    definitionContent.replaceChildren(messageElement);
 }
 
 function closeDictionary() {

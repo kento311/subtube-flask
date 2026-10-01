@@ -8,7 +8,7 @@
     <title>Subtube</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
-<body>
+<body data-translation-enabled="{{ 'true' if translation_enabled else 'false' }}">
     <div id="app-root">
         <div id="touch-strip"></div>
         <div id="header">
@@ -44,6 +44,11 @@
                     画面上部を操作<br>
                     3回タップ ➜ 元に戻る<br>
                     2回タップ ➜ 字幕 ON/OFF
+                    {% if not translation_enabled %}
+                    <div class="configuration-notice">
+                        翻訳機能は無効です。利用する場合はDeepL APIキーを設定してください。
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
