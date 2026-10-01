@@ -1,4 +1,2 @@
-Flask
-deep-translator
-youtube-transcript-api
-gunicorn
+Flask==3.1.3
+requests==2.34.2

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Subtube</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body data-translation-enabled="{{ 'true' if translation_enabled else 'false' }}">
+    <div id="app-root">
+        <div id="touch-strip"></div>
+        <div id="header">
+            <div class="video-input-row">
+                <input type="text" id="videoIdInput" placeholder="YouTube動画URL">
+                <button id="loadButton" type="button">Load</button>
+            </div>
+            <div class="subtitle-input-row">
+                <label for="subtitleFileInput">字幕ファイル</label>
+                <input
+                    type="file"
+                    id="subtitleFileInput"
+                    accept=".json,.vtt,.srt,application/json,text/vtt"
+                >
+            </div>
+        </div>
+        <div id="video-container">
+            <div class="video-wrapper">
+                <div id="player"></div>
+            </div>
+        </div>
+        <div id="subtitle-area">
+            <div id="subtitles">
+                <div class="operation-guide">
+                    <b>操作ガイド</b><br><br>
+                    <b>【基本操作】</b><br>
+                    動画URLと字幕ファイル（JSON / VTT / SRT）を選択<br>
+                    単語タップ ➜ 辞書検索<br>
+                    <b>文字を長押しして選択 ➜ 範囲翻訳</b><br><br>
+                    <b>【縦画面】</b><br>
+                    どこでも3回タップ ➜ 寝ながらモード<br><br>
+                    <b>【寝ながらモード】</b><br>
+                    画面上部を操作<br>
+                    3回タップ ➜ 元に戻る<br>
+                    2回タップ ➜ 字幕 ON/OFF
+                    {% if not translation_enabled %}
+                    <div class="configuration-notice">
+                        翻訳機能は無効です。利用する場合はDeepL APIキーを設定してください。
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div id="definition-box">
+            <button id="closeDictionaryButton" class="close-btn" type="button" aria-label="辞書を閉じる">×</button>
+            <div id="def-content"></div>
+        </div>
+    </div>
+    <div id="toast">Message</div>
+    <script src="{{ url_for('static', filename='subtitles.js') }}"></script>
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
