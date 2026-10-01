@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Subtube</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div id="app-root">
+        <div id="touch-strip"></div>
+        <div id="header">
+            <input type="text" id="videoIdInput" placeholder="動画URL">
+            <button onclick="loadVideo()">Load</button>
+        </div>
+        <div id="video-container">
+            <div class="video-wrapper">
+                <div id="player"></div>
+            </div>
+        </div>
+        <div id="subtitle-area">
+            <div id="subtitles">
+                <div class="operation-guide">
+                    <b>操作ガイド</b><br><br>
+                    <b>【基本操作】</b><br>
+                    単語タップ ➜ 辞書検索<br>
+                    <b>文字を長押しして選択 ➜ 範囲翻訳</b><br><br>
+                    <b>【縦画面】</b><br>
+                    どこでも3回タップ ➜ 寝ながらモード<br><br>
+                    <b>【寝ながらモード】</b><br>
+                    画面上部を操作<br>
+                    3回タップ ➜ 元に戻る<br>
+                    2回タップ ➜ 字幕 ON/OFF
+                </div>
+            </div>
+        </div>
+        <div id="definition-box">
+            <button class="close-btn" onclick="closeDictionary()">×</button>
+            <div id="def-content"></div>
+        </div>
+    </div>
+    <div id="toast">Message</div>
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
