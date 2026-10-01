@@ -1,6 +1,4 @@
-import json
 import os
-import subprocess
 import sys
 
 from flask import Flask, jsonify, render_template, request
@@ -41,40 +39,6 @@ def translate_sentence():
         return jsonify({"translation": translated})
     except Exception as error:
         return jsonify({"error": str(error)}), 500
-
-
-@app.route("/api/transcript/<video_id>")
-def get_transcript(video_id):
-    try:
-        command = [
-            "youtube_transcript_api",
-            video_id,
-            "--format",
-            "json",
-            "--languages",
-            "ja",
-            "en",
-        ]
-        result = subprocess.check_output(command, stderr=subprocess.STDOUT)
-        if not result:
-            return jsonify({"error": "字幕データが空でした"})
-
-        raw_data = json.loads(result)
-        transcript = (
-            raw_data[0]
-            if (
-                isinstance(raw_data, list)
-                and raw_data
-                and isinstance(raw_data[0], list)
-            )
-            else raw_data
-        )
-        return jsonify(transcript)
-    except subprocess.CalledProcessError as error:
-        error_message = error.output.decode()
-        return jsonify({"error": "字幕取得エラー: " + error_message})
-    except Exception as error:
-        return jsonify({"error": str(error)})
 
 
 if __name__ == "__main__":

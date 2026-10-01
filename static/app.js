@@ -1,5 +1,8 @@
 let player;
 let transcript = [];
+let syncTimer;
+
+const MAX_SUBTITLE_FILE_SIZE = 5 * 1024 * 1024;
 
 const youtubeApiScript = document.createElement("script");
 youtubeApiScript.src = "https://www.youtube.com/iframe_api";
@@ -12,6 +15,10 @@ let tapCount = 0;
 let tapTimer = null;
 
 document.addEventListener("selectionchange", () => {});
+document.getElementById("loadButton").addEventListener("click", loadVideo);
+document
+    .getElementById("closeDictionaryButton")
+    .addEventListener("click", closeDictionary);
 document
     .getElementById("subtitle-area")
     .addEventListener("touchend", checkSelection);
@@ -116,47 +123,65 @@ updateLayout();
 
 async function loadVideo() {
     const rawInput = document.getElementById("videoIdInput").value;
-    let videoId = rawInput;
-    const youtubeUrlPattern =
-        /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|live\/)([^#&?]*).*/;
-    const match = rawInput.match(youtubeUrlPattern);
-    if (match && match[2].length === 11) videoId = match[2];
+    const videoId = SubtubeSubtitles.extractYouTubeVideoId(rawInput);
     if (!videoId) {
-        alert("URLを入れてください");
+        showSubtitleMessage("有効なYouTube動画URLを入力してください。", true);
         return;
     }
 
-    if (player) {
-        player.loadVideoById(videoId);
-    } else {
-        player = new YT.Player("player", {
-            width: "100%",
-            height: "100%",
-            videoId,
-        });
+    const subtitleFile = document.getElementById("subtitleFileInput").files[0];
+    if (!subtitleFile) {
+        showSubtitleMessage("字幕ファイルを選択してください。", true);
+        return;
+    }
+    if (subtitleFile.size > MAX_SUBTITLE_FILE_SIZE) {
+        showSubtitleMessage("字幕ファイルは5MB以下にしてください。", true);
+        return;
     }
 
-    const subtitleContainer = document.getElementById("subtitles");
-    subtitleContainer.innerHTML =
-        '<p style="text-align:center; padding:20px;">Loading...</p>';
+    showSubtitleMessage("字幕ファイルを読み込んでいます…");
     try {
-        const response = await fetch(`/api/transcript/${videoId}`);
-        const data = await response.json();
-        if (data.error) {
-            subtitleContainer.innerHTML = `<p style="color:#ff6b6b; text-align:center;">${data.error}</p>`;
+        const source = await subtitleFile.text();
+        transcript = SubtubeSubtitles.parseSubtitleFile(subtitleFile.name, source);
+
+        if (!window.YT || typeof YT.Player !== "function") {
+            showSubtitleMessage(
+                "YouTubeプレーヤーを準備中です。数秒後にもう一度押してください。",
+                true,
+            );
             return;
         }
-        transcript = data;
+
+        if (player) {
+            player.loadVideoById(videoId);
+        } else {
+            player = new YT.Player("player", {
+                width: "100%",
+                height: "100%",
+                videoId,
+            });
+        }
+
         renderSubtitles();
         startSync();
     } catch (error) {
-        subtitleContainer.innerText = `Error: ${error}`;
+        showSubtitleMessage(error.message || "字幕ファイルを読み込めませんでした。", true);
     }
+}
+
+function showSubtitleMessage(message, isError = false) {
+    const subtitleContainer = document.getElementById("subtitles");
+    const messageElement = document.createElement("p");
+    messageElement.className = isError
+        ? "subtitle-message subtitle-message-error"
+        : "subtitle-message";
+    messageElement.textContent = message;
+    subtitleContainer.replaceChildren(messageElement);
 }
 
 function renderSubtitles() {
     const container = document.getElementById("subtitles");
-    container.innerHTML = "";
+    container.replaceChildren();
     transcript.forEach((line, index) => {
         const lineElement = document.createElement("div");
         lineElement.className = "line";
@@ -272,7 +297,8 @@ subtitleArea.addEventListener("scroll", () => {
 });
 
 function startSync() {
-    setInterval(() => {
+    clearInterval(syncTimer);
+    syncTimer = setInterval(() => {
         if (!player || !player.getCurrentTime) return;
         const time = player.getCurrentTime();
         let activeIndex = -1;
